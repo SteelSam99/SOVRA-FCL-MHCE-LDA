@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sovra‑FCL‑LDA © :: Legal Data Aid</title>
+  <meta name="description" content="Sovra-FCL-LDA is a legal diagnostic tool exposing racial bias in case records through structural analysis. NFIE Compliant." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="container">
+
+  <header class="banner">
+    <div class="banner-left">
+      <div class="banner-tag">SOVRA‑FCL‑LDA ©</div>
+      <h1>Legal Data Aid</h1>
+      <h2>Racial Bias Diagnostic Engine</h2>
+    </div>
+    <div class="banner-right">
+      <div class="banner-meta">FOXTROT‑CHIMERA‑LAMBDA</div>
+      <div class="banner-meta">NFIE COMPLIANT</div>
+      <div class="banner-meta">DS4‑KES‑109</div>
+      <div class="banner-status" id="db-status">⚪ LOCAL MODE</div>
+    </div>
+  </header>
+
+  <!-- CONTROL PANEL -->
+  <div class="control-bar">
+    <button id="uploadToggle" class="ctrl-btn active">⬆ Upload Cases</button>
+    <button id="searchToggle" class="ctrl-btn">⌕ Search Records</button>
+    <button id="patternToggle" class="ctrl-btn">◈ Pattern Report</button>
+    <button id="dbToggle" class="ctrl-btn locked">⬡ Database <span class="lock-tag">STAGED</span></button>
+    <div class="ctrl-spacer"></div>
+    <div class="gate-row" id="gateRow"></div>
+  </div>
+
+  <!-- UPLOAD PANEL -->
+  <section id="uploadPanel" class="panel active">
+    <div class="upload-zone" id="dropZone">
+      <div class="upload-icon">⬆</div>
+      <div class="upload-title">Drop Excel Case File Here</div>
+      <div class="upload-sub">Accepts .xlsx — Sovra Legal Aid Framework format</div>
+      <input type="file" id="fileInput" accept=".xlsx" hidden />
+      <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Browse File</button>
+    </div>
+    <div id="uploadStatus" class="upload-status hidden"></div>
+    <div id="uploadPreview" class="upload-preview hidden"></div>
+  </section>
+
+  <!-- SEARCH PANEL -->
+  <section id="searchPanel" class="panel hidden">
+
+    <!-- TIER 1 LINK DROP -->
+    <div class="t1-drop-bar">
+      <div class="t1-drop-label">⟦T1⟧ LINK DROP — Paste a public case URL for automatic field extraction</div>
+      <div class="t1-drop-row">
+        <input id="tier1UrlInput" type="text" placeholder="https://law.justia.com/cases/… or CourtListener, PACER, news article…" />
+        <button id="tier1InvokeBtn">EXTRACT</button>
+      </div>
+      <div class="t1-drop-sources">Accepts: CourtListener · Justia · Google Scholar · PACER public records · Legal news · Case summaries</div>
+    </div>
+
+    <!-- TIER 1 RESULT PANEL -->
+    <div id="tier1ResultPanel" class="hidden"></div>
+
+    <div class="search-bar">
+      <input id="searchQuery" type="text" placeholder="Search by Case ID, Judge ID, Charge Type, Jurisdiction…" />
+      <button id="searchBtn">INVOKE</button>
+    </div>
+
+    <!-- Context Gates -->
+    <div class="context-panel" id="contextPanel">
+      <label class="gate-item">
+        <input type="checkbox" id="gateContra"> <span>Contradiction Analysis</span>
+      </label>
+      <label class="gate-item">
+        <input type="checkbox" id="gateDrift"> <span>Narrative Drift</span>
+      </label>
+      <label class="gate-item">
+        <input type="checkbox" id="gateZS"> <span>Zero-Sum Framing</span>
+      </label>
+      <label class="gate-item">
+        <input type="checkbox" id="gateStrategy"> <span>LDF Strategy</span>
+      </label>
+      <label class="gate-item">
+        <input type="checkbox" id="gateVoice"> <span>Sovra Voice</span>
+      </label>
+    </div>
+
+    <!-- Diagnostic Bar -->
+    <div id="diagnosticBar" class="diagnostic-bar hidden">
+      <div class="diag-voice" id="diagVoice">
+        <span class="diag-label">SOVRA VOICE</span>
+        <div id="voiceOutput">Awaiting invocation…</div>
+      </div>
+      <div class="diag-scores">
+        <div class="score-item">
+          <span class="score-num" id="scoreCDI">—</span>
+          <span class="score-label">CDI</span>
+        </div>
+        <div class="score-sep">·</div>
+        <div class="score-item">
+          <span class="score-num" id="scoreCollapse">—</span>
+          <span class="score-label">Collapse</span>
+        </div>
+        <div class="score-sep">·</div>
+        <div class="score-item">
+          <span class="score-num" id="scoreStrategy">—</span>
+          <span class="score-label">Strategy</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="searchResults" class="results-container"></div>
+  </section>
+
+  <!-- PATTERN PANEL -->
+  <section id="patternPanel" class="panel hidden">
+    <div class="pattern-header">
+      <span class="pattern-title">⟦PATTERN⟧ MULTI-CASE BIAS ANALYSIS</span>
+      <span id="patternCaseCount" class="pattern-count">0 cases loaded</span>
+    </div>
+
+    <div id="patternGrid" class="pattern-grid">
+      <div class="pattern-card" id="pc-total">
+        <div class="pc-num" id="pv-total">—</div>
+        <div class="pc-label">Total Cases</div>
+      </div>
+      <div class="pattern-card" id="pc-bias">
+        <div class="pc-num" id="pv-bias">—</div>
+        <div class="pc-label">Racial Bias Flagged</div>
+      </div>
+      <div class="pattern-card" id="pc-collapse">
+        <div class="pc-num" id="pv-collapse">—</div>
+        <div class="pc-label">Collapse Triggers</div>
+      </div>
+      <div class="pattern-card" id="pc-cdi">
+        <div class="pc-num" id="pv-cdi">—</div>
+        <div class="pc-label">Avg CDI Score</div>
+      </div>
+      <div class="pattern-card" id="pc-batson">
+        <div class="pc-num" id="pv-batson">—</div>
+        <div class="pc-label">Batson Pattern</div>
+      </div>
+      <div class="pattern-card" id="pc-buck">
+        <div class="pc-num" id="pv-buck">—</div>
+        <div class="pc-label">Buck Pattern</div>
+      </div>
+      <div class="pattern-card" id="pc-flowers">
+        <div class="pc-num" id="pv-flowers">—</div>
+        <div class="pc-label">Flowers Standard</div>
+      </div>
+      <div class="pattern-card" id="pc-sentence">
+        <div class="pc-num" id="pv-sentence">—</div>
+        <div class="pc-label">Avg Sentence (Mo)</div>
+      </div>
+    </div>
+
+    <div id="driftBreakdown" class="drift-breakdown hidden">
+      <div class="drift-title">NARRATIVE DRIFT DISTRIBUTION</div>
+      <div id="driftBars" class="drift-bars"></div>
+    </div>
+
+    <div id="judgeTable" class="judge-table hidden">
+      <div class="judge-title">JUDGE PATTERN ANALYSIS</div>
+      <div id="judgeRows" class="judge-rows"></div>
+    </div>
+
+    <div class="nfie-note">
+      NOTHING IN THIS REPORT PERSUADES. NOTHING ASSERTS MEANING. IT PLACES STRUCTURE AND LETS COGNITION DECIDE.
+      All findings require qualified legal review before court submission. — SOVRA-FCL-LDA · NFIE Compliant
+    </div>
+  </section>
+
+  <!-- DATABASE PANEL (STAGED) -->
+  <section id="dbPanel" class="panel hidden">
+    <div class="staged-notice">
+      <div class="staged-icon">⬡</div>
+      <div class="staged-title">DATABASE MODULE — STAGED</div>
+      <div class="staged-body">
+        The Supabase integration is architected and ready to activate.<br/>
+        Privacy review required before enabling persistent case storage.<br/><br/>
+        <strong>What this will enable when activated:</strong><br/>
+        — Permanent case record storage with attorney authentication<br/>
+        — Cross-jurisdiction pattern analysis across all contributing attorneys<br/>
+        — Flowers Standard evidence building at national scale<br/>
+        — LDF case contribution pipeline<br/><br/>
+        <em>Contact: Samuel Paul Peacock · SOVRA-FCL-MHCE-v2.5</em>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <pre>⚖ Sovra-FCL-LDA awaits your case data…</pre>
+    <div class="footer-meta">
+      PROPERTY OF SAMUEL PAUL PEACOCK · SOVRA-FCL-MHCE-v2.5 · FOXTROT-CHIMERA-LAMBDA<br/>
+      DEVELOPED WITH CLAUDE (ANTHROPIC) · NFIE COMPLIANT · MARCH 2026
+    </div>
+  </footer>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
