@@ -1212,3 +1212,285 @@ footer pre {
   border-top: 1px solid var(--border);
   line-height: 1.6;
 }
+
+/* ============================================================
+   ALABAMA C2 BASELINE PANEL
+   ============================================================ */
+
+.al-panel {
+  background: var(--ink-2);
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--crimson-bright);
+  border-radius: var(--radius);
+  margin-top: 16px;
+  overflow: hidden;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.al-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: var(--ink-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.al-tag {
+  font-size: 8px;
+  letter-spacing: 3px;
+  color: var(--crimson-bright);
+  text-transform: uppercase;
+  flex: 1;
+}
+
+.al-status {
+  font-size: 9px;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.al-timestamp {
+  font-size: 9px;
+  color: var(--slate-dim);
+}
+
+.al-declaration {
+  padding: 10px 14px;
+  font-size: 10px;
+  color: var(--slate);
+  font-style: italic;
+  border-bottom: 1px solid var(--border);
+  line-height: 1.5;
+}
+
+.al-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.al-section {
+  padding: 10px 14px;
+  border-right: 1px solid var(--border);
+}
+
+.al-section:last-child { border-right: none; }
+
+.al-section-label {
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: var(--slate-dim);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.al-section-value {
+  font-size: 12px;
+  color: var(--white);
+  font-weight: 600;
+}
+
+.al-range {
+  font-size: 9px;
+  color: var(--slate-dim);
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+.al-source {
+  font-size: 9px;
+  color: var(--slate);
+  font-weight: 400;
+}
+
+/* Asymmetry block */
+.al-asymmetry-block {
+  padding: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.al-asym-title {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--slate-dim);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.al-asym-subtitle {
+  font-size: 9px;
+  color: var(--slate-dim);
+  font-style: italic;
+  margin-bottom: 12px;
+}
+
+.al-asym-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.al-asym-row-black {
+  border-bottom: none;
+}
+
+.al-asym-label {
+  font-size: 10px;
+  color: var(--slate);
+  flex: 1;
+  min-width: 200px;
+}
+
+.al-asym-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--white);
+  min-width: 80px;
+  text-align: right;
+}
+
+.al-asym-delta {
+  font-size: 10px;
+  min-width: 120px;
+  text-align: right;
+}
+
+.al-neg { color: var(--green-bright); }
+.al-pos { color: var(--crimson-bright); }
+
+/* Gap bar */
+.al-gap-row {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.al-gap-label {
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: var(--slate-dim);
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.al-gap-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.al-gap-bar {
+  flex: 1;
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.al-gap-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--amber), var(--crimson-bright));
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+.al-gap-num {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--crimson-bright);
+  min-width: 80px;
+  text-align: right;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.al-gap-note {
+  font-size: 9px;
+  color: var(--slate-dim);
+  font-style: italic;
+  display: block;
+}
+
+/* Defendant block */
+.al-defendant-block {
+  padding: 14px;
+  border-bottom: 1px solid var(--border);
+  background: #0f0a0a;
+}
+
+.al-def-title {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--slate-dim);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.al-def-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0;
+}
+
+.al-def-item {
+  padding: 8px 12px;
+  border-right: 1px solid var(--border);
+}
+
+.al-def-item:last-child { border-right: none; }
+
+.al-def-label {
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: var(--slate-dim);
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.al-def-value {
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* Footer */
+.al-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 14px;
+  background: var(--ink-3);
+  border-top: 1px solid var(--border);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.al-grade {
+  font-size: 8px;
+  color: var(--slate-dim);
+  letter-spacing: 1px;
+}
+
+.al-auto-note {
+  font-size: 8px;
+  color: var(--gold-dim);
+  letter-spacing: 1px;
+}
+
+.al-nfie {
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: var(--slate-dim);
+  padding: 8px 14px;
+  text-align: center;
+  border-top: 1px solid var(--border);
+  line-height: 1.8;
+}
