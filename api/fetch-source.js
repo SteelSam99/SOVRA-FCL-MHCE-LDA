@@ -36,10 +36,13 @@ export default async function handler(req, res) {
     return res.status(403).json({ ok: false, error: "NON_PUBLIC_URL" });
   }
 
+  // CourtListener API token from environment
+  const CL_TOKEN = process.env.COURTLISTENER_TOKEN || null;
+
   /* ----------------------------------------------------------
      COURTLISTENER API ROUTING
-     Routes opinion URLs through CourtListener REST API v3
-     which is designed for programmatic access — no bot blocking.
+     Authenticated via token — resolves 401 on opinion lookups.
+     Token stored in Vercel environment variable COURTLISTENER_TOKEN.
   ---------------------------------------------------------- */
   if (hostname === "www.courtlistener.com" || hostname === "courtlistener.com") {
     const opinionMatch = parsedUrl.pathname.match(/\/opinion\/(\d+)\//);
@@ -51,17 +54,27 @@ export default async function handler(req, res) {
       try {
         const ctrl = new AbortController();
         const t = setTimeout(() => ctrl.abort(), 8000);
-        const response = await fetch(apiUrl, {
-          signal: ctrl.signal,
-          headers: {
-            "User-Agent": "Sovra-FCL-LDA/1.0 (NFIE-Compliant Legal Research Tool)",
-            "Accept": "application/json"
-          }
-        });
+
+        const headers = {
+          "User-Agent": "Sovra-FCL-LDA/1.0 (NFIE-Compliant Legal Research Tool)",
+          "Accept": "application/json"
+        };
+
+        // Attach token if available
+        if (CL_TOKEN) {
+          headers["Authorization"] = `Token ${CL_TOKEN}`;
+        }
+
+        const response = await fetch(apiUrl, { signal: ctrl.signal, headers });
         clearTimeout(t);
 
         if (!response.ok) {
-          return res.status(200).json({ ok: false, error: "CL_API_HTTP_" + response.status, host: hostname });
+          return res.status(200).json({
+            ok: false,
+            error: "CL_API_HTTP_" + response.status,
+            host: hostname,
+            note: response.status === 401 ? "Token missing or invalid" : ""
+          });
         }
 
         const data = await response.json();
@@ -92,22 +105,24 @@ export default async function handler(req, res) {
 
   /* ----------------------------------------------------------
      GENERAL PUBLIC URL FETCH
-     Buffered (not streaming) for Vercel serverless compatibility.
+     Buffered for Vercel serverless compatibility.
   ---------------------------------------------------------- */
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), 8000);
 
   try {
-    const response = await fetch(url, {
-      signal: ctrl.signal,
-      headers: {
-        "User-Agent": "Sovra-FCL-LDA/1.0 (NFIE-Compliant Legal Research Tool)",
-        "Accept": "text/html,text/plain,application/xhtml+xml",
-        "Accept-Language": "en-US,en;q=0.9"
-      },
-      redirect: "follow"
-    });
+    const headers = {
+      "User-Agent": "Sovra-FCL-LDA/1.0 (NFIE-Compliant Legal Research Tool)",
+      "Accept": "text/html,text/plain,application/xhtml+xml",
+      "Accept-Language": "en-US,en;q=0.9"
+    };
 
+    // Pass token for any courtlistener subdomain
+    if (CL_TOKEN && hostname.endsWith("courtlistener.com")) {
+      headers["Authorization"] = `Token ${CL_TOKEN}`;
+    }
+
+    const response = await fetch(url, { signal: ctrl.signal, headers, redirect: "follow" });
     clearTimeout(t);
 
     if (!response.ok) {
