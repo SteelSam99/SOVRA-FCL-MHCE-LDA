@@ -832,7 +832,7 @@ const Tier1 = (() => {
   }
 
   /* ----------------------------------------------------------
-     FETCH PIPELINE — routes through FIDARCH relay
+     FETCH PIPELINE — routes through F.I.D.A.R.C.H.© relay
      ---------------------------------------------------------- */
   async function fetchAndExtract(url) {
     if (!url || !url.match(/^https?:\/\//i)) {
