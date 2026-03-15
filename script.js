@@ -1,6 +1,6 @@
 /* ============================================================
    Sovra‑FCL‑MHCE©|LDA — Legal Data Aid
-   Author: Samuel Paul Peacock | NFIE Compliant | March 2026
+   Author: Samuel Paul Peacock | NFIE© Compliant | March 2026
    ============================================================ */
 
 "use strict";
