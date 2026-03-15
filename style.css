@@ -1494,3 +1494,111 @@ footer pre {
   border-top: 1px solid var(--border);
   line-height: 1.8;
 }
+
+/* ============================================================
+   ACCESS GATE
+   ============================================================ */
+
+.gate-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: #000;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.gate-overlay.hidden { display: none !important; }
+
+.gate-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 800px;
+  padding: 0 24px;
+}
+
+.gate-logo {
+  width: 100%;
+  max-width: 600px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  user-select: none;
+  pointer-events: none;
+}
+
+.gate-field-wrap {
+  display: flex;
+  gap: 0;
+  width: 100%;
+  max-width: 480px;
+  margin-top: -8px;
+}
+
+.gate-input {
+  flex: 1;
+  background: #0a0a0f;
+  border: 1px solid #c9a84c;
+  border-right: none;
+  color: #c9a84c;
+  padding: 14px 18px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 4px;
+  outline: none;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.gate-input::placeholder {
+  color: #7a6430;
+  letter-spacing: 3px;
+  font-size: 11px;
+}
+
+.gate-input:focus {
+  border-color: #f0c040;
+  background: #0f0f18;
+}
+
+.gate-btn {
+  background: #7a6430;
+  border: 1px solid #c9a84c;
+  color: #f0f0f8;
+  padding: 14px 24px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 3px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-weight: 700;
+}
+
+.gate-btn:hover {
+  background: #c9a84c;
+  color: #0a0a0f;
+}
+
+.gate-error {
+  margin-top: 12px;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: #c0392b;
+  font-family: 'IBM Plex Mono', monospace;
+  text-align: center;
+}
+
+.gate-nfie {
+  margin-top: 32px;
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: #3a3a4a;
+  font-family: 'IBM Plex Mono', monospace;
+  text-align: center;
+  line-height: 1.8;
+}
