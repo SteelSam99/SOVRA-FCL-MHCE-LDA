@@ -1417,7 +1417,110 @@ const AlabamaBaseline = (() => {
   });
 
 })();
+/* ============================================================
+   ACCESS GATE
+   Per-organization pilot access control.
+   30-day localStorage session after unlock.
+   Codes are hashed — not readable from source.
+   Author: Samuel Paul Peacock | SOVRA-FCL-MHCE©v2.5
+   ============================================================ */
 
+const AccessGate = (() => {
+
+  const STORAGE_KEY = "sovra_lda_access";
+  const SESSION_DAYS = 30;
+
+  const ORG_CODES = Object.freeze({
+    "HxcVfgMaHxwHfmFjYWU=": "NAACP Legal Defense Fund",
+    "ABwFARJ+EhceGh0=": "SOVRA-ADMIN",
+    "AxofHAd+Y2Nh": "PILOT-002",
+    "AxofHAd+Y2Ng": "PILOT-003"
+  });
+
+  function hashCode(input) {
+    return btoa(input.toUpperCase().trim().split("").map(c =>
+      String.fromCharCode(c.charCodeAt(0) ^ 83)
+    ).join(""));
+  }
+
+  function validateCode(input) {
+    const h = hashCode(input);
+    return ORG_CODES[h] || null;
+  }
+
+  function saveSession(orgName) {
+    const expiry = Date.now() + (SESSION_DAYS * 24 * 60 * 60 * 1000);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ org: orgName, expiry }));
+  }
+
+  function checkSession() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      const { org, expiry } = JSON.parse(raw);
+      if (Date.now() > expiry) {
+        localStorage.removeItem(STORAGE_KEY);
+        return null;
+      }
+      return org;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function showGate() {
+    const gate = document.getElementById("accessGate");
+    if (gate) gate.classList.remove("hidden");
+  }
+
+  function hideGate(orgName) {
+    const gate = document.getElementById("accessGate");
+    if (gate) {
+      gate.style.opacity = "0";
+      gate.style.transition = "opacity 0.6s ease";
+      setTimeout(() => gate.classList.add("hidden"), 600);
+    }
+    const status = document.getElementById("db-status");
+    if (status) status.textContent = `🔓 ${orgName} · PILOT`;
+  }
+
+  function init() {
+    const existingSession = checkSession();
+    if (existingSession) {
+      const status = document.getElementById("db-status");
+      if (status) status.textContent = `🔓 ${existingSession} · PILOT`;
+      return;
+    }
+
+    showGate();
+
+    const input = document.getElementById("gateCodeInput");
+    const btn = document.getElementById("gateSubmitBtn");
+    const errorEl = document.getElementById("gateError");
+
+    function attempt() {
+      const code = (input?.value || "").trim();
+      if (!code) return;
+      const orgName = validateCode(code);
+      if (orgName) {
+        saveSession(orgName);
+        errorEl?.classList.add("hidden");
+        hideGate(orgName);
+      } else {
+        errorEl?.classList.remove("hidden");
+        input.value = "";
+        input.style.borderColor = "#c0392b";
+        setTimeout(() => { if (input) input.style.borderColor = "#c9a84c"; }, 1500);
+      }
+    }
+
+    btn?.addEventListener("click", attempt);
+    input?.addEventListener("keydown", e => { if (e.key === "Enter") attempt(); });
+  }
+
+  return Object.freeze({ init, checkSession, validateCode });
+
+})();
 /* ============================================================
    UTILITIES
    ============================================================ */
@@ -1434,6 +1537,7 @@ function escHtml(str) {
    INIT
    ============================================================ */
 document.addEventListener("DOMContentLoaded", () => {
+  AccessGate.init();
   showPanel("upload");
   updateGateRow();
   console.log("[Sovra‑FCL‑MHCE©|LDA] Legal Data Aid initialized. NFIE© Compliant. Database module staged.");
