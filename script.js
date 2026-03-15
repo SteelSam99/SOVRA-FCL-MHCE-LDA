@@ -1,6 +1,6 @@
 /* ============================================================
    Sovra‑FCL‑MHCE©|LDA — Legal Data Aid
-   Author: Samuel Paul Peacock | NFIE Compliant© | March 2026
+   Author: Samuel Paul Peacock | NFIE Compliant | March 2026
    ============================================================ */
 
 "use strict";
@@ -219,6 +219,16 @@ function runSearch() {
   const resultsEl = document.getElementById("searchResults");
   const diagBar = document.getElementById("diagnosticBar");
 
+  /* ── ALABAMA C2 BASELINE — fires on query alone, no cases required ── */
+  if (AlabamaBaseline.shouldFire(query)) {
+    AlabamaBaseline.query(query, null, null, null).then(result => {
+      AlabamaBaseline.render(result, query);
+    });
+  } else {
+    const alPanel = document.getElementById("alabamaBaselinePanel");
+    if (alPanel) alPanel.classList.add("hidden");
+  }
+
   if (!LDA.loaded) {
     resultsEl.innerHTML = `<div class="no-results">No cases loaded. Upload a case file first.</div>`;
     return;
@@ -273,28 +283,6 @@ function runSearch() {
 
   resultsEl.innerHTML = results.map(r => renderCaseCard(r)).join("");
   updateGateRow();
-
-  /* ── ALABAMA C2 BASELINE — AUTO-QUERY ──
-     Fires automatically when search contains C2-relevant terms.
-     Race-stratified asymmetry calculated from documented Alabama records.
-     Alabama tells on itself with its own data.
-  ─────────────────────────────────────────── */
-  if (AlabamaBaseline.shouldFire(query)) {
-    // Pull charge type and race from first result for defendant-specific calculation
-    const firstResult = results[0] || {};
-    const chargeType   = firstResult["Charge_Type"] || firstResult["Charge_Type"] || null;
-    const sentenceMonths = parseFloat(firstResult["Sentence_Length_Months"] || 0) || null;
-    const race         = firstResult["Race"] || null;
-
-    // Run async — doesn't block search results render
-    AlabamaBaseline.query(query, chargeType, sentenceMonths, race).then(result => {
-      AlabamaBaseline.render(result, query);
-    });
-  } else {
-    // Hide panel if query doesn't trigger C2
-    const alPanel = document.getElementById("alabamaBaselinePanel");
-    if (alPanel) alPanel.classList.add("hidden");
-  }
 }
 
 function renderCaseCard(r) {
@@ -591,8 +579,8 @@ window.Sovra.LDA = Object.freeze({
    TIER 1 — LINK DROP API
    F.I.D.A.R.C.H.© Legal Document Extraction Pipeline
    Evidentiary Grade: T1-ANALYTICAL
-   NFIE Compliant — fetches, measures, reports. Does not conclude.
-   Author: Samuel Paul Peacock | SOVRA-FCL-MHCE-v2.5
+   NFIE© Compliant — fetches, measures, reports. Does not conclude.
+   Author: Samuel Paul Peacock | SOVRA-FCL-MHCE-v2.5©
    ============================================================ */
 
 const Tier1 = (() => {
@@ -1032,8 +1020,8 @@ const Tier1 = (() => {
    Race-Stratified Sentencing Asymmetry Baseline
    Fires automatically on every C2-relevant search
    Alabama tells on itself. Every time. With its own data.
-   NFIE Compliant — measures, documents, does not conclude.
-   Author: Samuel Paul Peacock | SOVRA-FCL-MHCE-v2.5
+   NFIE© Compliant — measures, documents, does not conclude.
+   Author: Samuel Paul Peacock | SOVRA-FCL-MHCE-v2.5©
    ============================================================ */
 
 const AlabamaBaseline = (() => {
@@ -1256,24 +1244,18 @@ const AlabamaBaseline = (() => {
     // Always calculate from documented baseline first
     const baseline = calculateC2Baseline(chargeType, sentenceMonths, race);
 
-    // Attempt live fetch from CourtListener Alabama
-    // This enriches the baseline with recent case data
+    // Attempt live fetch via dedicated Alabama search endpoint
     let liveData = null;
     try {
-      const relayUrl = "/api/fetch-source?url=" +
-        encodeURIComponent(ALABAMA_SOURCES[0].url);
-      const res = await fetch(relayUrl);
+      const alUrl = "/api/search?type=alabama&charge=" +
+        encodeURIComponent(chargeType || "general");
+      const res = await fetch(alUrl);
       if (res.ok) {
         const data = await res.json();
-        if (data.ok && data.html) {
-          // Extract any sentence figures from live results
-          const text = data.html
-            .replace(/<[^>]+>/g, " ")
-            .replace(/\s+/g, " ");
-          const sentenceMatches = text.match(/\d+\s*(?:years?|months?)/gi) || [];
+        if (data.ok && data.count > 0) {
           liveData = {
-            source: ALABAMA_SOURCES[0].label,
-            samplesFound: sentenceMatches.length,
+            source: data.source,
+            samplesFound: data.count,
             status: "LIVE"
           };
         }
@@ -1454,8 +1436,8 @@ function escHtml(str) {
 document.addEventListener("DOMContentLoaded", () => {
   showPanel("upload");
   updateGateRow();
-  console.log("[Sovra‑FCL‑MHCE©|LDA] Legal Data Aid initialized. NFIE Compliant©. Database module staged.");
-  console.log("[Sovra‑FCL‑MHCE©|LDA] Author: Samuel Paul Peacock | SOVRA-FCL-MHCE-v2.5");
+  console.log("[Sovra‑FCL‑MHCE©|LDA] Legal Data Aid initialized. NFIE© Compliant. Database module staged.");
+  console.log("[Sovra‑FCL‑MHCE©|LDA] Author: Samuel Paul Peacock | SOVRA-FCL-MHCE-v2.5©");
 
   /* ── TIER 1 LINK DROP BINDINGS ── */
   const tier1Btn   = document.getElementById("tier1InvokeBtn");
@@ -1468,7 +1450,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const panel = document.getElementById("tier1ResultPanel");
     if (panel) {
       panel.classList.remove("hidden");
-      panel.innerHTML = `<div class="t1-loading">⟳ Invoking F.I.D.A.R.C.H©. extraction pipeline…</div>`;
+      panel.innerHTML = `<div class="t1-loading">⟳ Invoking F.I.D.A.R.C.H.© extraction pipeline…</div>`;
     }
 
     if (tier1Btn) {
