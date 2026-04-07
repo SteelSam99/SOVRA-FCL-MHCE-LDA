@@ -613,6 +613,110 @@ const Tier1 = (() => {
     return null;
   }
 
+  /* ----------------------------------------------------------
+     CHANGE 2 — extractCaseName
+     Reads case title from heading text captured before HTML
+     strip, then falls back to "v." patterns in body text.
+     CourtListener API injects case_name as <h1> — caught here.
+     ---------------------------------------------------------- */
+  function extractCaseName(text, headingText) {
+    // Priority 1: heading captured before tag strip
+    if (headingText) {
+      const vPattern = headingText.match(/([A-Z][^\n]{2,60})\s+v\.?\s+([A-Z][^\n]{2,60})/i);
+      if (vPattern) return (vPattern[1].trim() + " v. " + vPattern[2].trim()).slice(0, 120);
+      const inRe = headingText.match(/In\s+re\s+[^\n]{3,60}/i);
+      if (inRe) return inRe[0].trim();
+      const inMatter = headingText.match(/In\s+the\s+Matter\s+of\s+[^\n]{3,60}/i);
+      if (inMatter) return inMatter[0].trim();
+      // Use heading directly if short enough to be a case title
+      if (headingText.length > 4 && headingText.length < 120) return headingText.trim();
+    }
+    // Priority 2: "X v. Y" pattern in body text
+    const vBody = text.match(/([A-Z][a-zA-Z\s''\-]{1,40})\s+v\.?\s+([A-Z][a-zA-Z\s''\-]{1,40})/);
+    if (vBody) return (vBody[1].trim() + " v. " + vBody[2].trim()).slice(0, 120);
+    // Priority 3: "In re" in body
+    const inReBody = text.match(/In\s+re\s+[A-Z][a-zA-Z\s''\-]{2,50}/i);
+    if (inReBody) return inReBody[0].trim();
+    // Priority 4: "In the Matter of" in body
+    const matterBody = text.match(/In\s+the\s+Matter\s+of\s+[A-Z][a-zA-Z\s''\-]{2,50}/i);
+    if (matterBody) return matterBody[0].trim();
+    return null;
+  }
+
+  /* ----------------------------------------------------------
+     CHANGE 3 — extractGender
+     Reads explicit gender terms first, then uses pronoun
+     counting with a minimum threshold to avoid false positives
+     from references to victims, judges, or other parties.
+     ---------------------------------------------------------- */
+  function extractGender(text) {
+    const t = text.toLowerCase();
+    // Explicit terms — most reliable
+    if (
+      t.includes("male defendant") || t.includes("male petitioner") ||
+      t.includes("male appellant") || t.includes("the defendant, a man") ||
+      t.includes("defendant is a man") || t.includes("defendant, a male")
+    ) return "Male";
+    if (
+      t.includes("female defendant") || t.includes("female petitioner") ||
+      t.includes("female appellant") || t.includes("the defendant, a woman") ||
+      t.includes("defendant is a woman") || t.includes("defendant, a female")
+    ) return "Female";
+    // Pronoun counting — legal opinions use pronouns consistently
+    const heCount = (t.match(/\bhe\b|\bhim\b|\bhis\b/g) || []).length;
+    const sheCount = (t.match(/\bshe\b|\bher\b|\bhers\b/g) || []).length;
+    // Require clear dominance and minimum count to avoid false positives
+    if (heCount > sheCount * 2 && heCount >= 5) return "Male";
+    if (sheCount > heCount * 2 && sheCount >= 5) return "Female";
+    return null;
+  }
+
+  /* ----------------------------------------------------------
+     CHANGE 4 — extractAge
+     Reads numeric age patterns near defendant-adjacent language.
+     Sanity-checked to legal defendant range (14–99).
+     ---------------------------------------------------------- */
+  function extractAge(text) {
+    const patterns = [
+      /(\d{1,2})[- ]year[s]?[- ]old\s+(?:defendant|petitioner|appellant|man|woman|male|female)/i,
+      /defendant[^.]{0,40},?\s*age[d]?\s+(\d{1,2})/i,
+      /(?:age[d]?|age:)\s+(\d{1,2})\s+(?:at the time|years)/i,
+      /(\d{1,2})\s+years?\s+of\s+age/i,
+      /was\s+(\d{1,2})\s+years?\s+old\s+(?:at the time|when)/i
+    ];
+    for (const pattern of patterns) {
+      const m = text.match(pattern);
+      if (m) {
+        // Try both capture groups — some patterns put age in group 1, some in group 2
+        const age = parseInt(m[1]) || parseInt(m[2]);
+        if (!isNaN(age) && age >= 14 && age <= 99) return age;
+      }
+    }
+    return null;
+  }
+
+  /* ----------------------------------------------------------
+     CHANGE 5 — extractCity
+     Reads city/county level location below jurisdiction.
+     Prioritizes explicit "City of X" then "City, State" then
+     county-level, then location-near-event patterns.
+     ---------------------------------------------------------- */
+  function extractCity(text) {
+    // "City of Birmingham" pattern
+    const cityOf = text.match(/City\s+of\s+([A-Z][a-zA-Z\s]{2,30})/);
+    if (cityOf) return cityOf[1].trim();
+    // "City, State abbreviation" — most common in legal docs
+    const cityState = text.match(/([A-Z][a-zA-Z\s]{2,25}),\s+(?:Alabama|AL|Georgia|GA|Mississippi|MS|Tennessee|TN|Florida|FL|Texas|TX|Louisiana|LA|Arkansas|AR|South Carolina|SC|North Carolina|NC|Virginia|VA|California|CA|New York|NY|Illinois|IL|Ohio|OH|Michigan|MI|Pennsylvania|PA)\b/);
+    if (cityState) return cityState[1].trim();
+    // "[Name] County" — county level fallback
+    const county = text.match(/([A-Z][a-zA-Z]{2,20})\s+County/);
+    if (county) return county[1].trim() + " County";
+    // Location near event language
+    const inCity = text.match(/(?:arrested|tried|convicted|sentenced|occurred|took place)\s+in\s+([A-Z][a-zA-Z\s]{2,25})(?:\s*,|\s+on|\s+at|\s+by|\s+in)/);
+    if (inCity) return inCity[1].trim();
+    return null;
+  }
+
   function extractChargeType(text) {
     const t = text.toLowerCase();
     const charges = [
@@ -739,6 +843,16 @@ const Tier1 = (() => {
   }
 
   /* ----------------------------------------------------------
+     WORD SLICE UTILITY — bounds text to first N words
+     Same cap as F.I.D.A.R.C.H. source pipeline.
+     ---------------------------------------------------------- */
+  function sliceFirstWords(text, maxWords) {
+    if (!text) return "";
+    const words = text.trim().split(/\s+/);
+    return words.slice(0, maxWords).join(" ");
+  }
+
+  /* ----------------------------------------------------------
      CDI CALCULATOR — same logic as CHIMERA methodology
      ---------------------------------------------------------- */
   function calculateCDI(c1, c2, c3) {
@@ -770,8 +884,13 @@ const Tier1 = (() => {
      Takes fetched HTML text + source URL
      Returns populated case object + metadata
      ---------------------------------------------------------- */
-  function extractLegalFields(text, url) {
+  function extractLegalFields(text, url, headingText) {
+    // CHANGE 6 — new extractors wired in
+    const caseName   = extractCaseName(text, headingText);
     const race       = extractDefendantRace(text);
+    const gender     = extractGender(text);
+    const age        = extractAge(text);
+    const city       = extractCity(text);
     const charge     = extractChargeType(text);
     const sentence   = extractSentenceMonths(text);
     const judge      = extractJudgeId(text);
@@ -789,14 +908,18 @@ const Tier1 = (() => {
     const biasFlag   = calculateRacialBiasFlag(c1, c2, race);
     const strategy   = routeLDFStrategy(c1, c2, c3, biasFlag);
 
-    // Count populated fields for completeness score
-    const fields = [race, charge, sentence, judge, jurisdiction, defense, plea, c1, c2, c3];
-    const populated = fields.filter(f => f !== null).length;
-    const completeness = Math.round((populated / fields.length) * 100);
+    // Count populated fields — denominator updated for new fields
+    const allFields = [caseName, race, gender, age, city, charge, sentence, judge, jurisdiction, defense, plea, c1, c2, c3];
+    const populated = allFields.filter(f => f !== null).length;
+    const completeness = Math.round((populated / allFields.length) * 100);
 
     return {
+      Case_Name:                 caseName     || "UNDETERMINED",
       Case_ID:                   caseId,
       Race:                      race         || "UNDETERMINED",
+      Gender:                    gender       || "UNDETERMINED",
+      Age:                       age !== null ? String(age) : "UNDETERMINED",
+      City:                      city         || "UNDETERMINED",
       Charge_Type:               charge       || "UNDETERMINED",
       Sentence_Length_Months:    sentence     || "",
       Judge_ID:                  judge        || "UNDETERMINED",
@@ -835,8 +958,16 @@ const Tier1 = (() => {
       const data = await res.json();
       if (!data.ok) return { ok: false, error: data.error };
 
+      // Capture heading text BEFORE full tag strip
+      // CourtListener API injects case_name as <h1> — this catches it directly
+      const rawHtml = data.html || "";
+      const headingMatch = rawHtml.match(/<h[12][^>]*>([\s\S]*?)<\/h[12]>/i);
+      const headingText = headingMatch
+        ? headingMatch[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
+        : null;
+
       // Strip HTML — reuse FIDARCH extraction logic
-      const readable = data.html
+      const readable = rawHtml
         .replace(/<script[\s\S]*?<\/script>/gi, " ")
         .replace(/<style[\s\S]*?<\/style>/gi, " ")
         .replace(/<nav[\s\S]*?<\/nav>/gi, " ")
@@ -847,13 +978,19 @@ const Tier1 = (() => {
         .replace(/\s+/g, " ")
         .trim();
 
-      const fields = extractLegalFields(readable, url);
+      // CHANGE 1 — slice to first 1200 words before extraction
+      // Focuses extractors on structured document header where
+      // demographic information is most consistently placed
+      const bounded = sliceFirstWords(readable, 1200);
+      const wordCount = bounded.trim().split(/\s+/).length;
+
+      const fields = extractLegalFields(bounded, url, headingText);
 
       return {
         ok: true,
         fields,
         host: data.host,
-        wordCount: readable.split(/\s+/).length
+        wordCount
       };
 
     } catch (e) {
@@ -902,8 +1039,12 @@ const Tier1 = (() => {
 
         <div class="t1-body">
           ${[
+            ["Case Name",     f.Case_Name],
             ["Case ID",       f.Case_ID],
             ["Race",          f.Race],
+            ["Gender",        f.Gender],
+            ["Age",           f.Age],
+            ["City",          f.City],
             ["Charge",        f.Charge_Type],
             ["Sentence (Mo)", f.Sentence_Length_Months || "—"],
             ["Judge",         f.Judge_ID],
